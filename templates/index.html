@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>远程鼠标键盘</title>
+    <link rel="stylesheet" href="/static/base.css">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <style>
+        body {
+            overflow-x: hidden
+        }
+
+        #canvas {
+            min-height: 300px;
+            border: 1px solid #000;
+            background-color: #f8f8f8;
+            position: relative;
+        }
+
+        #keys {
+            height: 400px;
+        }
+
+        .key {
+            width: 130px;
+            height: 130px;
+        }
+
+        .btn {
+            border: none;
+            outline: none;
+            background: linear-gradient(to right, #525050, #9b9b9b);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="ub ub-ver">
+    <div id="canvas" class="ub ub-f1"></div>
+    <div class="ub ub-f1 ub-pc"><span id="xy"></span></div>
+    <div id="keys" class="ub ub-ver ub-f1">
+        <div class="ub ub-pc">
+            <div class="key ub ub-f1"></div>
+            <div class="key btn ub-f1 ub ub-pc ub-ac" id="up">上</div>
+            <div class="key ub ub-f1"></div>
+        </div>
+        <div class="ub ub-pc">
+            <div class="key btn ub ub-pc ub-ac ub-f1" id="left">下</div>
+            <div class="key btn ub ub-pc ub-ac ub-f1" id="right">左</div>
+            <div class="key btn ub ub-pc ub-ac ub-f1" id="down">右</div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('gesturestart', function (event) {
+        event.preventDefault()
+    })
+
+    // 获取所有的按钮元素
+    var buttons = document.querySelectorAll('#keys .btn');
+
+    // 绑定点击事件
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].addEventListener('click', function () {
+            // 获取按钮的id属性
+            var code = this.id;
+            press(code)
+        });
+    }
+
+    function ajaxGet(url) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url);
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    resolve(xhr.responseText);
+                } else {
+                    reject(new Error('Request failed!'));
+                }
+            };
+
+            xhr.onerror = () => {
+                reject(new Error('Network Error'));
+            };
+
+            xhr.send();
+        });
+    }
+
+    // api start.
+
+    async function press(code) {
+        return await ajaxGet('/press/' + code);
+    }
+
+    async function release(code) {
+        return await ajaxGet('/release/' + code);
+    }
+
+
+    let lastX = 0, lastY = 0
+
+    function follow() {
+        //定位自动偏移问题在target元素再套一个父元素可解决
+        var startx, starty, left_start, top_start, movex, movey, X, Y;
+        var target = document.getElementById('canvas');
+        target.addEventListener("touchstart", fn) //手指触摸
+        target.addEventListener("touchmove", fun) //手指持续滑动
+
+        function fun(e) {
+            movex = e.touches[0].pageX;
+            movey = e.touches[0].pageY;
+            X = movex - startx + parseInt(left_start);
+            Y = movey - starty + parseInt(top_start);
+            document.getElementById('xy').innerText = "x=" + X + "px\nY=" + Y + "px";
+
+
+            detectTouchDirection({
+                x: lastX,
+                y: lastY
+            }, {
+                x: X,
+                y: Y
+            })
+
+            lastX = X
+            lastY = Y
+        }
+
+        function fn(e) {
+            startx = e.touches[0].pageX;
+            starty = e.touches[0].pageY;
+
+            top_start = target.offsetTop;
+            left_start = target.offsetLeft;
+        }
+    }
+
+    follow()
+
+
+    // 获取触摸点在屏幕上的位置
+    function getTouchPosition(event) {
+        return {
+            x: event.touches[0].pageX,
+            y: event.touches[0].pageY
+        };
+    }
+
+    // 检测触摸点的移动方向
+    function detectTouchDirection(prevTouch, currTouch) {
+        console.error(prevTouch, currTouch)
+
+        var deltaX = currTouch.x - prevTouch.x;
+        var deltaY = currTouch.y - prevTouch.y;
+        var absDeltaX = Math.abs(deltaX);
+        var absDeltaY = Math.abs(deltaY);
+
+        document.getElementById('xy').innerText = "x=" + absDeltaX + "px\nY=" + absDeltaY + "px";
+
+        let code
+        if (absDeltaX > absDeltaY) {
+            // 水平方向滑动
+            if (deltaX > 0) {
+                console.log('向右滑动');
+                press('right')
+                code = 'right'
+            } else {
+                console.log('向左滑动');
+                press('left')
+                code = 'left'
+            }
+        } else if (absDeltaY > absDeltaX) {
+            // 垂直方向滑动
+            if (deltaY > 0) {
+                console.log('向下滑动');
+                press('down')
+                code = 'down'
+            } else {
+                console.log('向上滑动');
+                press('up')
+                code = 'up'
+            }
+        } else {
+            // 无法确定滑动方向
+            console.log('无法确定滑动方向');
+        }
+        if (code) {
+            setTimeout(function () {
+                release(code)
+            }, 200)
+        }
+    }
+
+    // 处理触摸移动事件
+    function handleTouchMove(event) {
+        console.error(event)
+        var prevTouch = getTouchPosition(event);
+        setTimeout(function () {
+            var currTouch = getTouchPosition(event);
+            detectTouchDirection(prevTouch, currTouch);
+            prevTouch = currTouch;
+        }, 50); // 延迟100毫秒检测一次，避免过于频繁的检测影响性能
+    }
+
+    document.getElementById('canvas').addEventListener('touchmove', handleTouchMove);
+
+</script>
+</body>
+</html>
