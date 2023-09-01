@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <title>远程鼠标键盘</title>
     <link rel="stylesheet" href="/static/base.css">
-    <meta name="viewport"
-          content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <style>
         body {
             overflow-x: hidden
@@ -70,6 +69,9 @@
             // 获取按钮的id属性
             var code = this.id;
             press(code)
+            setTimeout(function () {
+                release(code)
+            }, 200)
         });
     }
 
@@ -143,8 +145,7 @@
         }
     }
 
-    follow()
-
+    // follow()
 
     // 获取触摸点在屏幕上的位置
     function getTouchPosition(event) {
@@ -210,7 +211,17 @@
         }, 50); // 延迟100毫秒检测一次，避免过于频繁的检测影响性能
     }
 
-    document.getElementById('canvas').addEventListener('touchmove', handleTouchMove);
+    // document.getElementById('canvas').addEventListener('touchmove', handleTouchMove);
+
+
+
+    const canvas= document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    canvas.addEventListener("mousedown", function(e) {
+        var x = e.x;
+        var y = e.y;
+        context.fillRect(x, y, 3, 3);
+    }, true);
 
 </script>
 </body>
