@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/polynds/RemoteControl/device"
 	"github.com/polynds/RemoteControl/ip"
-	"github.com/polynds/RemoteControl/qrcode"
+	"github.com/polynds/RemoteControl/ws"
 	"net/http"
 )
 
@@ -14,7 +14,13 @@ func main() {
 	r.Static("/static", "./static")
 	r.LoadHTMLGlob("templates/*")
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "main.html", nil)
+		c.HTML(http.StatusOK, "home.html", nil)
+	})
+
+	hub := ws.NewHub()
+	go hub.Run()
+	r.GET("/ws", func(c *gin.Context) {
+		ws.WsClient(hub, c.Writer, c.Request)
 	})
 	r.GET("/press/:code", func(c *gin.Context) {
 		code := c.Param("code")
@@ -32,15 +38,9 @@ func main() {
 	})
 
 	port := ":9021"
-	qrcodeUrl := "http://127.0.0.1" + port
 	fmt.Println("http://127.0.0.1" + port)
 	if ip, err := ip.ClientIp(); err == nil {
 		fmt.Println("http://" + ip + port)
-		qrcodeUrl = "http://" + ip + port
-	}
-	if len(qrcodeUrl) > 0 {
-		qr := qrcode.NewQRCode2ConsoleWithUrl(qrcodeUrl, true)
-		qr.Output()
 	}
 	err := r.Run(port)
 	if err != nil {

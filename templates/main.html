@@ -19,8 +19,13 @@
 <canvas id="canvas" style='background-color:#ccc;' width="375" height="600"></canvas>
 <script type='text/javascript'>
 
+    let conn;
+    // keyPOS
+    let keyPos = new Map;
     const canvasElem = document.getElementById('canvas');
     const ctx = canvasElem.getContext('2d');
+
+
     canvasElem.addEventListener('mousemove', procMove, false);
     canvasElem.addEventListener('mouseout', procOut, false);
 
@@ -44,10 +49,7 @@
     }
 
 
-
-
-
-
+    // key
     function rectangle(x, y, w, h) {
         ctx.beginPath();
         ctx.rect(x, y, w, h);
@@ -66,24 +68,84 @@
         ctx.fillText(t, x, y);
     }
 
-    function drawKey(x, y, w, h, t) {
+    function _drawKey(x, y, w, h, t, key) {
         rectangle(x, y, w, h)
         text(t, x + (w / 2), y + (h / 2))
+        keyPos.set(key, {"x": x, "y": y, "w": w, "h": h});
     }
 
 
+    const windowWidth = 375;
+    const keyStart = 450;
     const span = 5;
     const w = 60;
     const h = 60;
-    const x = (375 / 2) - (w / 2);
-    const y = 450;
+    const x = (windowWidth / 2) - (w / 2);
+    const y = keyStart;
     const y2 = y + h + span;
 
-    drawKey(x, y, w, h, '↑')
-    drawKey(x - w - span, y2, w, h, '←')
-    drawKey(x, y2, w, h, '↓')
-    drawKey(x + w + span, y2, w, h, '→')
+    function drawKey() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        _drawKey(x, y, w, h, '↑', 'top')
+        _drawKey(x - w - span, y2, w, h, '←', 'left')
+        _drawKey(x, y2, w, h, '↓', 'down')
+        _drawKey(x + w + span, y2, w, h, '→', 'right')
+    }
 
+    drawKey();
+    // key
+
+    // key click event
+
+    canvas.addEventListener('click', function (e) {
+
+        p = getEventPosition(e);
+        console.log(p)
+        drawKey(p);
+
+    }, false);
+
+    function getEventPosition(ev) {
+
+        let x, y;
+
+        if (ev.layerX || ev.layerX === 0) {
+
+            x = ev.layerX;
+
+            y = ev.layerY;
+
+        } else if (ev.offsetX || ev.offsetX === 0) { // Opera
+
+            x = ev.offsetX;
+
+            y = ev.offsetY;
+
+        }
+
+        return {x: x, y: y};
+
+    }
+
+    console.error(keyPos)
+</script>
+<script type="text/javascript">
+    window.onload = function () {
+        if (window["WebSocket"]) {
+            conn = new WebSocket("ws://" + document.location.host + "/ws");
+            conn.onclose = function (evt) {
+                console.log('onclose');
+            };
+            conn.onmessage = function (evt) {
+                let messages = evt.data.split('\n');
+                for (let i = 0; i < messages.length; i++) {
+                    console.log(messages[i]);
+                }
+            };
+        }else{
+            console.error("<b>Your browser does not support WebSockets.</b>")
+        }
+    };
 </script>
 </body>
 </html>
