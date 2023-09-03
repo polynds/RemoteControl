@@ -17,25 +17,29 @@ func main() {
 		c.HTML(http.StatusOK, "home.html", nil)
 	})
 
+	startCapture := make(chan bool)
+
 	hub := ws.NewHub()
 	go hub.Run()
 	r.GET("/ws", func(c *gin.Context) {
-		ws.WsClient(hub, c.Writer, c.Request)
+		ws.WsClient(hub, c.Writer, c.Request, startCapture)
 	})
-	r.GET("/press/:code", func(c *gin.Context) {
-		code := c.Param("code")
-		device.Press(code)
-		c.JSON(200, gin.H{
-			"message": "ok",
-		})
+
+	r.GET("/stream", func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "image/png")
+		// 设置刷新响应的间隔时间
+		flusher, ok := c.Writer.(http.Flusher)
+		if !ok {
+			http.Error(c.Writer, "Streaming not supported", http.StatusInternalServerError)
+			return
+		}
+		flusher.Flush()
+
+		go device.PushFlow(c.Writer, startCapture)
 	})
-	r.GET("/release/:code", func(c *gin.Context) {
-		code := c.Param("code")
-		device.Release(code)
-		c.JSON(200, gin.H{
-			"message": "ok",
-		})
-	})
+
+	//sp := device.NewScreenshot(startCapture)
+	//go sp.StartCapture()
 
 	port := ":9021"
 	fmt.Println("http://127.0.0.1" + port)

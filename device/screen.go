@@ -5,12 +5,15 @@ import (
 	"github.com/go-vgo/robotgo"
 )
 
-func Capture() {
-
+func Capture(send chan []byte, capture chan bool) {
+	// 开始录制屏幕
+	send <- []byte("capturing...")
+	capture <- true
 }
 
-func CloseCapture() {
-
+func CloseCapture(send chan []byte, capture chan bool) {
+	send <- []byte("Capture closing...")
+	capture <- false
 }
 
 func Size() (int, int) {

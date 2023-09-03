@@ -29,9 +29,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
+	hub          *Hub
+	conn         *websocket.Conn
+	send         chan []byte
+	startCapture chan bool
 }
 
 func (c *Client) readDump() {
@@ -93,9 +94,9 @@ func (c *Client) readDump() {
 
 			go device.TouchMove(mapPoint.X, mapPoint.Y)
 		case "screen":
-			go device.Capture()
+			go device.Capture(c.send, c.startCapture)
 		case "close":
-			go device.CloseCapture()
+			go device.CloseCapture(c.send, c.startCapture)
 		case "up":
 			go device.PressKeyUp()
 		case "down":
@@ -150,16 +151,17 @@ func (c *Client) writeDump() {
 	}
 }
 
-func WsClient(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func WsClient(hub *Hub, w http.ResponseWriter, r *http.Request, startCapture chan bool) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	client := &Client{
-		hub:  hub,
-		conn: conn,
-		send: make(chan []byte, 256),
+		hub:          hub,
+		conn:         conn,
+		send:         make(chan []byte, 256),
+		startCapture: startCapture,
 	}
 	client.hub.register <- client
 

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="/static/unpkg.com_konva@9.2.0_konva.min.js"></script>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+    <title>Konva Rect Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+
+        #container canvas {
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<script>
+    function cmd(c, data = {data: ""}) {
+        conn.send(JSON.stringify({
+            cmd: c,
+            data: data
+        }))
+    }
+</script>
+<script>
+    let conn;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const keyBroadStart = 600;
+    let showScreen = false;
+    let keyBroadNames = new Map;
+    let keyBroadIds = new Map;
+
+    const stage = new Konva.Stage({
+        container: 'container',
+        width: width,
+        height: height,
+    });
+
+
+    // touchPadLayer start
+    const touchPadLayer = new Konva.Layer();
+    const touchPad = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: width,
+        height: keyBroadStart - 10,
+        id: 'touchPad',
+        fill: '#cccccc',
+        shadowBlur: 10,
+        cornerRadius: 10,
+    });
+
+    touchPadLayer.on('touchmove', function () {
+        const touchPos = stage.getPointerPosition();
+        const x = touchPos.x;
+        const y = touchPos.y;
+        console.info('x: ' + x + ', y: ' + y);
+        cmd("move", {x: x, y: y})
+    });
+    touchPadLayer.add(touchPad)
+    // touchPadLayer end
+
+
+    // moniterLayer start
+    let moniter;
+    const moniterLayer = new Konva.Layer();
+    moniterLayer.hide()
+
+    function newMoniter(video) {
+        return moniter = new Konva.Image({
+            image: video,
+            draggable: true,
+            x: 0,
+            y: 0,
+        });
+    }
+
+    // touchPadLayer end
+
+
+    // keyBroadLayer start
+    let tween = null;
+    const keyBroadLayer = new Konva.Layer();
+
+    const windowWidth = width;
+    const span = 5;
+    const w = 60;
+    const h = 60;
+    const x = (windowWidth / 2) - (w / 2);
+    const y = keyBroadStart;
+    const y2 = y + h + span;
+
+
+    function rectangle(x, y, w, h, id) {
+        return new Konva.Rect({
+            x: x,
+            y: y,
+            width: w,
+            height: h,
+            id: id,
+            fill: '#000000',
+            shadowBlur: 10,
+            cornerRadius: 10,
+        });
+    }
+
+    function text(t, x, y, size = 30) {
+        return new Konva.Text({
+            x: x,
+            y: y,
+            text: t,
+            fontSize: size,
+            fontFamily: '30pt Calibri',
+            fill: '#ffffff',
+            align: 'center',
+        });
+
+    }
+
+    function _drawKey(x, y, w, h, t, id) {
+        const key = rectangle(x, y, w, h, id);
+        keyBroadLayer.add(key)
+        const tx = x + (w / 2);
+        const ty = y + (h / 2) - 11;
+        let _tx = tx
+        switch (id) {
+            case 'up':
+                _tx = tx - 7
+                break
+            case 'left':
+                _tx = tx - 15
+                break
+            case 'down':
+                _tx = tx - 7
+                break
+            case 'right':
+                _tx = tx - 15
+                break
+        }
+        const title = text(t, _tx, ty)
+        keyBroadLayer.add(title)
+        title.on('mouseup touchend', function (e) {
+            console.info('title Mouseup or touchend', e);
+            keyBroadTitleClickListener(e)
+            keyBtnAnimation(e)
+        });
+        key.on('mouseup touchend', function (e) {
+            console.info('key Mouseup or touchend', e);
+            keyBroadKeyClickListener(e)
+            keyBtnAnimation(e)
+        });
+    }
+
+    function keyBroadTitleClickListener(event) {
+        const _symbol = event.target._partialText
+        console.error(_symbol)
+        for (const [symbol, name] of keyBroadNames) {
+            console.log(symbol, name, _symbol);
+            if (symbol === _symbol) {
+                cmd(name)
+                return;
+            }
+        }
+    }
+
+    function keyBroadKeyClickListener(event) {
+        const _id = event.target._id
+        console.error(_id)
+        for (const [name, id] of keyBroadIds) {
+            console.log(id, name, _id);
+            if (id === _id) {
+                cmd(name)
+                return;
+            }
+        }
+    }
+
+    function toggleMoniter(title) {
+        if (showScreen) {
+            moniterLayer.show()
+            cmd("screen")
+            title.setText('触控')
+        } else {
+            moniterLayer.hide()
+            cmd("close")
+            title.setText('屏幕')
+        }
+    }
+
+    function drawScreenKey() {
+        const sx = x - (2 * w) - (2 * span);
+        const screen = rectangle(sx, y2, w, h, 'screen');
+        keyBroadLayer.add(screen)
+        const title = text('屏幕', sx + 15, y2 + 25, 15)
+        keyBroadLayer.add(title)
+        title.on('mouseup touchend', function (e) {
+            showScreen = !!!showScreen;
+            console.info('screen title Mouseup or touchend\n', showScreen, e);
+            toggleMoniter(title)
+        });
+        screen.on('mouseup touchend', function (e) {
+            showScreen = !!!showScreen;
+            console.info('screen Mouseup or touchend\n', showScreen, e);
+            toggleMoniter(title)
+        });
+    }
+
+    function drawKey() {
+        _drawKey(x, y, w, h, '↑', 'up')
+        _drawKey(x - w - span, y2, w, h, '←', 'left')
+        _drawKey(x, y2, w, h, '↓', 'down')
+        _drawKey(x + w + span, y2, w, h, '→', 'right')
+        drawScreenKey()
+    }
+
+    function keyBtnAnimation(evt) {
+        const shape = evt.target;
+
+        tween = new Konva.Tween({
+            node: shape,
+            duration: 0.5,
+            easing: Konva.Easings.ElasticEaseOut,
+            scaleX: shape.getAttr('startScale'),
+            scaleY: shape.getAttr('startScale'),
+            shadowOffsetX: 5,
+            shadowOffsetY: 5,
+        });
+
+        tween.play();
+    }
+
+    drawKey();
+    // keyBroadLayer end
+    stage.add(touchPadLayer, moniterLayer, keyBroadLayer);
+
+
+    keyBroadIds.set("up", keyBroadLayer.find("#up")[0]._id)
+    keyBroadIds.set("left", keyBroadLayer.find("#left")[0]._id)
+    keyBroadIds.set("down", keyBroadLayer.find("#down")[0]._id)
+    keyBroadIds.set("right", keyBroadLayer.find("#right")[0]._id)
+    console.error(keyBroadIds)
+    keyBroadNames.set("↑", "up")
+    keyBroadNames.set("←", "left")
+    keyBroadNames.set("↓", "down")
+    keyBroadNames.set("→", "right")
+    console.error(keyBroadNames)
+
+</script>
+<script type="text/javascript">
+    window.onload = function () {
+        if (window["WebSocket"]) {
+            conn = new WebSocket("ws://" + document.location.host + "/ws");
+            conn.onclose = function (evt) {
+                console.log('onclose');
+            };
+            conn.onmessage = function (evt) {
+                let messages = evt.data.split('\n');
+                for (let i = 0; i < messages.length; i++) {
+                    console.log(messages[i]);
+                }
+            };
+            conn.onopen = function (evt) {
+                cmd("init", {width: width, height: height})
+            }
+        } else {
+            console.error("<b>Your browser does not support WebSockets.</b>")
+        }
+    };
+</script>
+</body>
+</html>
