@@ -68,6 +68,8 @@ func (c *Client) readDump() {
 		screenSize := device.NewScreenSize()
 		fmt.Println("received:", data)
 		switch data.CMD {
+		case "ping":
+			c.send <- []byte("pong")
 		case "init":
 			point := data.Data.(map[string]interface{})
 			w := point["width"].(float64)
@@ -105,6 +107,8 @@ func (c *Client) readDump() {
 			go device.PressKeyLeft()
 		case "right":
 			go device.PressKeyRight()
+		case "click":
+			go device.ClickLeft()
 		}
 		c.hub.broadcast <- []byte("ok")
 	}

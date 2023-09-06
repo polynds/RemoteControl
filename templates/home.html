@@ -22,6 +22,10 @@
 <div id="container"></div>
 <script>
     function cmd(c, data = {data: ""}) {
+        if (!conn) {
+            console.error("lost connect...")
+            return;
+        }
         conn.send(JSON.stringify({
             cmd: c,
             data: data
@@ -55,24 +59,44 @@
         cornerRadius: 10,
     });
 
-    let lastTouchPos = {x: 0, y: 0};
-    const lastTouchPosSpan = 10;
+
+    // 监听触摸开始事件
+    let touchStartTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    touchPadLayer.on('touchstart', function () {
+        // 记录触摸开始的时间和位置
+        touchStartTime = new Date().getTime();
+        const touchPos = stage.getPointerPosition();
+        touchStartX = touchPos.x;
+        touchStartY = touchPos.y;
+    });
+
+    // 监听触摸结束事件
+    touchPadLayer.on('touchend', function () {
+        // 计算触摸持续时间和移动距离
+        const touchEndTime = new Date().getTime();
+        const touchPos = stage.getPointerPosition();
+        const touchEndX = touchPos.x;
+        const touchEndY = touchPos.y;
+        const touchDuration = touchEndTime - touchStartTime;
+        const touchDistance = Math.sqrt(Math.pow(touchEndX - touchStartX, 2) + Math.pow(touchEndY - touchStartY, 2));
+
+        // 判断是单击还是双击
+        if (touchDuration < 300 && touchDistance < 10) {
+            // 单击事件
+            console.log('Single tap detected');
+            cmd("click");
+        } else if (touchDuration < 500 && touchDistance < 10) {
+            // 双击事件
+            console.log('Double tap detected');
+        }
+    });
+
     touchPadLayer.on('touchmove', function () {
         const touchPos = stage.getPointerPosition();
         let x = touchPos.x;
         let y = touchPos.y;
-
-        if (x - lastTouchPos.x <= 0 || y - lastTouchPos.y <= 0) {
-            x -= lastTouchPosSpan
-            y -= lastTouchPosSpan
-        } else {
-            x += lastTouchPosSpan
-            y += lastTouchPosSpan
-        }
-
-        lastTouchPos.x = x;
-        lastTouchPos.y = y;
-
         console.info('x: ' + x + ', y: ' + y);
         cmd("move", {x: x, y: y})
     });
@@ -271,6 +295,8 @@
 </script>
 <script type="text/javascript">
 
+    let timer;
+
     function connect() {
         conn = new WebSocket("ws://" + document.location.host + "/ws");
         conn.onmessage = function (evt) {
@@ -281,13 +307,17 @@
         };
         conn.onclose = function (evt) {
             console.log('onclose');
+            timer = null;
             // 延迟一段时间后重新连接
             // setTimeout(function () {
             //     connect()
             // }, 5000); // 5秒后重新连接
         };
         conn.onopen = function (evt) {
-            cmd("init", {width: width, height: height})
+            cmd("init", {width: width, height: keyBroadStart - 10})
+            timer = setInterval(function () {
+                cmd("ping");
+            }, 5000)
         }
     }
 

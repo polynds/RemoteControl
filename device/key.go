@@ -32,3 +32,10 @@ func PressKeyRight() {
 	<-timer
 	robotgo.KeyTap("right", "right")
 }
+
+func ClickLeft() {
+	robotgo.Click()
+}
+func ClickRight() {
+	robotgo.Click("right")
+}
