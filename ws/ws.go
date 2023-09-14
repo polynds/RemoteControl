@@ -23,7 +23,7 @@ var (
 	space   = []byte{' '}
 )
 
-var upgrader = websocket.Upgrader{
+var upgrade = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
@@ -156,7 +156,7 @@ func (c *Client) writeDump() {
 }
 
 func WsClient(hub *Hub, w http.ResponseWriter, r *http.Request, startCapture chan bool) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := upgrade.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
