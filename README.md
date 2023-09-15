@@ -7,6 +7,13 @@
 - 实现远程触控板
 - 基于websocket实现指令通讯
 
+## 运行
+- Mac需要高权限才能运行
+```shell
+sudo ./RemoteControl-darwin-amd64
+```
+
+
 ## 编译
 - 需要安装gcc
 - Windows需要安装mingw

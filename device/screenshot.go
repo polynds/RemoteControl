@@ -51,14 +51,18 @@ func (s *Screenshot) StartCapture() {
 }
 
 func (s *Screenshot) capture() {
-	bitmap := robotgo.CaptureScreen()
+	bitmap := robotgo.CaptureImg()
 	currentDir, err := os.Getwd()
 	if err != nil {
 		fmt.Println("Error getting current directory:", err)
 		return
 	}
 	path := filepath.Join(currentDir, "screenshot.png")
-	robotgo.SaveBitmap(bitmap, path)
+	err = robotgo.SavePng(bitmap, path)
+	if err != nil {
+		fmt.Println("Error SavePng current directory:", err)
+		return
+	}
 }
 
 func PushFlow(w http.ResponseWriter, stop chan bool) {

@@ -1,15 +1,28 @@
 package device
 
 import (
+	"fmt"
 	"github.com/go-vgo/robotgo"
 	"time"
 )
 
 func PressKeyUp() {
-	timer := time.After(100 * time.Millisecond)
-	robotgo.KeyTap("up")
-	<-timer
-	robotgo.KeyTap("up", "up")
+	err := robotgo.KeyPress("up")
+	if err != nil {
+		fmt.Println("KeyPress err:", err)
+		return
+	}
+
+	//timer := time.After(100 * time.Millisecond)
+	//err := robotgo.KeyPress("up")
+	//if err != nil {
+	//	return
+	//}
+	//<-timer
+	//err := robotgo.KeyTap("up", "up")
+	//if err != nil {
+	//	return
+	//}
 }
 
 func PressKeyDown() {
