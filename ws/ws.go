@@ -84,17 +84,23 @@ func (c *Client) readDump() {
 			x := point["x"].(float64)
 			y := point["y"].(float64)
 			fmt.Println("move:", x, y)
-			clientScreenSize := cache.Get("clientScreenSize").(*device.Region)
+			clientScreenSize := cache.Get("clientScreenSize", 0).(*device.Region)
 			fmt.Println("move client screen size:", clientScreenSize)
-			fmt.Println("move client screen size from cache:", cache.Get("clientScreenSize"))
+			fmt.Println("move client screen size from cache:", cache.Get("clientScreenSize", 0))
 			mapPoint := device.MapCoordinates(
 				device.NewClientSize(clientScreenSize.Width, clientScreenSize.Height),
 				screenSize,
 				device.Coordinates{X: int(x), Y: int(y)},
 			)
 			fmt.Println("move mapPoint:", x, y)
-
 			go device.TouchMove(mapPoint.X, mapPoint.Y)
+
+			//lastClientX, lastClientY := cache.Get("lastClientX", 0).(int), cache.Get("lastClientY", 0).(int)
+			//offsetX, offsetY := lastClientX-mapPoint.X, lastClientY-mapPoint.Y
+			//fmt.Println("move offsetXY:", offsetX, offsetY)
+			//go device.TouchMove(offsetX, offsetY)
+			//cache.Set("lastClientX", mapPoint.X)
+			//cache.Set("lastClientY", mapPoint.Y)
 		case "screen":
 			go device.Capture(c.send, c.startCapture)
 		case "close":

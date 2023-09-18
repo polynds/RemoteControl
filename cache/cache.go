@@ -6,6 +6,10 @@ func Set(key string, value interface{}) {
 	cache[key] = value
 }
 
-func Get(key string) interface{} {
-	return cache[key]
+func Get(key string, defaultVal interface{}) interface{} {
+	if value, ok := cache[key]; ok {
+		return value
+	}
+
+	return defaultVal
 }
