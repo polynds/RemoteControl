@@ -2,6 +2,7 @@ package ws
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/polynds/RemoteControl/cache"
@@ -78,29 +79,36 @@ func (c *Client) readDump() {
 			cache.Set("clientScreenSize", clientScreenSize)
 			fmt.Println("init client screen size:", clientScreenSize)
 			fmt.Println("init server screen size:", screenSize)
+
+			msg := NewMessage()
+			msg.CMD = "screen"
+			msg.Data = screenSize
+			jsonStr, err := json.Marshal(msg)
+			if err != nil {
+				return
+			}
+			c.send <- jsonStr
 		case "move":
 			point := data.Data.(map[string]interface{})
-			fmt.Println("received:", point["x"])
-			x := point["x"].(float64)
-			y := point["y"].(float64)
-			fmt.Println("move:", x, y)
-			clientScreenSize := cache.Get("clientScreenSize", 0).(*device.Region)
-			fmt.Println("move client screen size:", clientScreenSize)
-			fmt.Println("move client screen size from cache:", cache.Get("clientScreenSize", 0))
-			mapPoint := device.MapCoordinates(
-				device.NewClientSize(clientScreenSize.Width, clientScreenSize.Height),
-				screenSize,
-				device.Coordinates{X: int(x), Y: int(y)},
-			)
+			x := int(point["x"].(float64))
+			y := int(point["y"].(float64))
 			fmt.Println("move mapPoint:", x, y)
-			go device.TouchMove(mapPoint.X, mapPoint.Y)
+			go device.TouchMove(x, y)
 
-			//lastClientX, lastClientY := cache.Get("lastClientX", 0).(int), cache.Get("lastClientY", 0).(int)
-			//offsetX, offsetY := lastClientX-mapPoint.X, lastClientY-mapPoint.Y
-			//fmt.Println("move offsetXY:", offsetX, offsetY)
-			//go device.TouchMove(offsetX, offsetY)
-			//cache.Set("lastClientX", mapPoint.X)
-			//cache.Set("lastClientY", mapPoint.Y)
+			//fmt.Println("received:", point["x"])
+			//x := point["x"].(float64)
+			//y := point["y"].(float64)
+			//fmt.Println("move:", x, y)
+			//clientScreenSize := cache.Get("clientScreenSize", 0).(*device.Region)
+			//fmt.Println("move client screen size:", clientScreenSize)
+			//fmt.Println("move client screen size from cache:", cache.Get("clientScreenSize", 0))
+			//mapPoint := device.MapCoordinates(
+			//	device.NewClientSize(clientScreenSize.Width, clientScreenSize.Height),
+			//	screenSize,
+			//	device.Coordinates{X: int(x), Y: int(y)},
+			//)
+			//fmt.Println("move mapPoint:", x, y)
+			//go device.TouchMove(mapPoint.X, mapPoint.Y)
 		case "screen":
 			go device.Capture(c.send, c.startCapture)
 		case "close":

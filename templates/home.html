@@ -38,6 +38,31 @@
     const height = window.innerHeight;
     const keyBroadStart = 600;
     let showScreen = false;
+    let screenWith = 0;
+    let screenHeight = 0;
+    let screenRateX = 0;
+    let screenRateY = 0;
+    let screenSpan = 10;
+
+    function calcX(x) {
+        return x * screenRateX
+    }
+
+    function calcY(y) {
+        return y * screenRateY
+    }
+
+    function calcSpan(n) {
+        if (n > 0) {
+            return n - span
+        }
+
+        if (n < 0) {
+            return n + span
+        }
+        return n;
+    }
+
 
     const stage = new Konva.Stage({
         container: 'container',
@@ -98,7 +123,10 @@
         let x = touchPos.x;
         let y = touchPos.y;
         console.info('x: ' + x + ', y: ' + y);
-        cmd("move", {x: x, y: y})
+        const offsetX = calcSpan(calcX(x) - calcX(touchStartX))
+        const offsetY = calcSpan(calcY(y) - calcY(touchStartY))
+        console.info('offsetX: ' + offsetX + ', offsetY: ' + offsetY);
+        cmd("move", {x: offsetX, y: offsetY})
     });
     touchPadLayer.add(touchPad)
     // touchPadLayer end
@@ -302,6 +330,21 @@
         conn.onmessage = function (evt) {
             let messages = evt.data.split('\n');
             for (let i = 0; i < messages.length; i++) {
+                if (messages[0]) {
+                    try {
+                        const msg = JSON.parse(messages[0])
+                        if (msg.cmd === 'screen') {
+                            screenWith = msg.data.Width
+                            screenHeight = msg.data.Height
+                            const cW = width
+                            const cH = keyBroadStart - 10
+                            screenRateX = screenWith / cW
+                            screenRateY = screenHeight / cH
+                            console.log(screenWith, screenHeight, screenRateX, screenRateY);
+                        }
+                    } catch (e) {
+                    }
+                }
                 console.log(messages[i]);
             }
         };
