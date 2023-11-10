@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/polynds/RemoteControl/device"
 	"github.com/polynds/RemoteControl/ip"
+	"github.com/polynds/RemoteControl/qrcode"
 	"github.com/polynds/RemoteControl/ws"
 	"html/template"
 	"io/fs"
@@ -56,7 +57,10 @@ func main() {
 	port := ":9021"
 	fmt.Println("http://127.0.0.1" + port)
 	if ip, err := ip.ClientIp(); err == nil {
-		fmt.Println("http://" + ip + port)
+		url := "http://" + ip + port
+		fmt.Println(url)
+		qr := qrcode.NewQRCode2ConsoleWithUrl(url, true)
+		qr.Output()
 	}
 	err := r.Run(port)
 	if err != nil {

@@ -126,7 +126,7 @@
         const offsetX = calcSpan(calcX(x) - calcX(touchStartX))
         const offsetY = calcSpan(calcY(y) - calcY(touchStartY))
         console.info('offsetX: ' + offsetX + ', offsetY: ' + offsetY);
-        cmd("move", {x: offsetX, y: offsetY})
+        cmd("move", {x: x, y: y})
     });
     touchPadLayer.add(touchPad)
     // touchPadLayer end
@@ -233,7 +233,7 @@
                     // moniterLayer.hide()
                     touchPadLayer.show()
                     cmd("close")
-                    title.setText('屏幕')
+                    title.setText('屏幕1')
                 }
             } else {
                 cmd(name)

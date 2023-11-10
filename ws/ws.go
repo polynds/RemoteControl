@@ -90,25 +90,25 @@ func (c *Client) readDump() {
 			c.send <- jsonStr
 		case "move":
 			point := data.Data.(map[string]interface{})
-			x := int(point["x"].(float64))
-			y := int(point["y"].(float64))
-			fmt.Println("move mapPoint:", x, y)
-			go device.TouchMove(x, y)
-
-			//fmt.Println("received:", point["x"])
-			//x := point["x"].(float64)
-			//y := point["y"].(float64)
-			//fmt.Println("move:", x, y)
-			//clientScreenSize := cache.Get("clientScreenSize", 0).(*device.Region)
-			//fmt.Println("move client screen size:", clientScreenSize)
-			//fmt.Println("move client screen size from cache:", cache.Get("clientScreenSize", 0))
-			//mapPoint := device.MapCoordinates(
-			//	device.NewClientSize(clientScreenSize.Width, clientScreenSize.Height),
-			//	screenSize,
-			//	device.Coordinates{X: int(x), Y: int(y)},
-			//)
+			//x := int(point["x"].(float64))
+			//y := int(point["y"].(float64))
 			//fmt.Println("move mapPoint:", x, y)
-			//go device.TouchMove(mapPoint.X, mapPoint.Y)
+			//go device.TouchMove(x, y)
+
+			fmt.Println("received:", point["x"])
+			x := point["x"].(float64)
+			y := point["y"].(float64)
+			fmt.Println("move:", x, y)
+			clientScreenSize := cache.Get("clientScreenSize", 0).(*device.Region)
+			fmt.Println("move client screen size:", clientScreenSize)
+			fmt.Println("move client screen size from cache:", cache.Get("clientScreenSize", 0))
+			mapPoint := device.MapCoordinates(
+				device.NewClientSize(clientScreenSize.Width, clientScreenSize.Height),
+				screenSize,
+				device.Coordinates{X: int(x), Y: int(y)},
+			)
+			fmt.Println("move mapPoint:", x, y)
+			go device.TouchMove(mapPoint.X, mapPoint.Y)
 		case "screen":
 			go device.Capture(c.send, c.startCapture)
 		case "close":
