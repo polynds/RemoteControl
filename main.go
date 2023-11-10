@@ -1,18 +1,30 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/polynds/RemoteControl/device"
 	"github.com/polynds/RemoteControl/ip"
 	"github.com/polynds/RemoteControl/ws"
+	"html/template"
+	"io/fs"
 	"net/http"
 )
 
+// 使用 go:embed 注解，将文件内容嵌入到程序中
+//
+//go:embed templates/*
+var templates embed.FS
+
 func main() {
 	r := gin.Default()
-	r.Static("/static", "./static")
-	r.LoadHTMLGlob("templates/*")
+	temp := template.Must(template.New("").ParseFS(templates, "templates/*.html"))
+	r.SetHTMLTemplate(temp)
+
+	fe, _ := fs.Sub(templates, "templates")
+	r.StaticFS("/templates", http.FS(fe))
+
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "home.html", nil)
 	})
